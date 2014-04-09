@@ -1,7 +1,10 @@
 ##Sacramento City population mapping by block 2010
 
 ##Read in shapefile
+require(rgdal)
 SacPop <- readOGR("/Users/joelrip/Documents/R_Files/Mapping/Sacramento/CityData","Sac_2010CensusBlkPop",stringsAsFactors=F)
+
+require(classInt)
 
 ##Calculate and map percent black (exported as PNG 2400 pixels wide)
 SacPop$blackPct <- SacPop$BLACK / SacPop$TOTAL
@@ -42,3 +45,18 @@ par(mar=c(0,0,0,0))
 plot(SacPop,col=b5Colours, lwd=0.1, border="white", bg="gray30")
 plot(SacPop,col=a5Colours, lwd=0.1, border="white", bg="gray30")
 plot(SacPop,col=h5Colours, lwd=0.1, border="white", bg="gray30")
+
+##Population density calculation
+require(rgeos)
+require(RColorBrewer)
+require(classInt)
+SacPop$area <- gArea(SacPop, byid=T)
+SacPop$dens <- SacPop$TOTAL / (SacPop$area * 3.58701e-8)
+dens10 <- classIntervals(SacPop$dens, n=10, style="jenks")
+pal <- brewer.pal(8, "Reds")
+plot(dens10, pal=pal)
+dens10Colors <- findColours(dens10,pal)
+plot(SacPop,col=dens10Colors, lwd=0.1, border="white")
+title("Population Density per Square Mile")
+labs <- c("< 2,651", "< 6,603", "< 9,865", "< 13,921", "< 20,305", "< 32,287", "< 57,690", "< 136,701", "< 249,440", "> 249,440")
+legend("bottomleft", fill = attr(dens10Colors,"palette"), legend=labs, bty="n")
